@@ -28,6 +28,9 @@ RUN npm install
 RUN npm run build
 
 RUN chmod -R 775 storage bootstrap/cache
+RUN php artisan storage:link || true
+RUN php artisan config:clear || true
+RUN php artisan cache:clear || true
 
 EXPOSE 8080
 
