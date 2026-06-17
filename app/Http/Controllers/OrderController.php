@@ -126,7 +126,7 @@ class OrderController extends Controller
 
             // KONFIGURASI MIDTRANS
             Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-            Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+            Config::$isProduction = false;
             Config::$isSanitized = true;
             Config::$is3ds = true;
 
