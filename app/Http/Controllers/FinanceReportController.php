@@ -46,11 +46,21 @@ class FinanceReportController extends Controller
             $totalPengeluaran += $pengeluaran;
         }
 
+        // =========================================================
+        // INI TAMBAHAN BARU: Menarik data detail pesanan (Siapa beli apa)
+        // =========================================================
+        $transactions = Order::with(['user', 'orderItems.product'])
+            ->whereIn('status', ['paid', 'completed', 'shipped'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         $pdf = Pdf::loadView('reports.finance-pdf', [
             'rows' => $rows,
             'totalPemasukan' => $totalPemasukan,
             'totalPengeluaran' => $totalPengeluaran,
             'labaBersih' => $totalPemasukan - $totalPengeluaran,
+            // Variabel $transactions dikirim ke cetakan HTML PDF
+            'transactions' => $transactions, 
         ]);
 
         return $pdf->download('laporan-keuangan.pdf');

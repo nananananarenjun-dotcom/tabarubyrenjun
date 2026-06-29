@@ -9,6 +9,7 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class TrainingParticipantsTable extends BaseWidget
 {
+    protected static ?int $sort = 10;
     protected static ?string $heading = 'Peserta Pelatihan';
 
     protected int|string|array $columnSpan = 'full';

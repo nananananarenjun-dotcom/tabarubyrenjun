@@ -11,6 +11,7 @@ use Filament\Widgets\Concerns\InteractsWithPageFilters;
 class PemasukanChart extends ChartWidget
 {
     use InteractsWithPageFilters;
+    protected static ?int $sort = 2;
 
     protected static ?string $heading = 'Grafik Arus Kas';
 

@@ -12,11 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('categories', function (Blueprint $table) {
-    $table->id();
-    $table->string('name');
-    $table->string('slug')->unique();
-    $table->timestamps();
-});
+            // Ubah id() bawaan menjadi category_id bertipe String
+            $table->string('category_id', 10)->primary();
+            
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->text('description')->nullable();
+            
+            $table->timestamps();
+        });
     }
 
     /**

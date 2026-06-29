@@ -75,11 +75,14 @@ class ProductResource extends Resource
                     ->minValue(0)
                     ->default(1)
                     ->live()
-                    ->afterStateUpdated(function ($state, Forms\Set $set) {
-                        if ((int) $state <= 0) {
-                            $set('status', 'sold_out');
-                        } else {
-                            $set('status', 'available');
+                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                        // PERBAIKAN 1: Jangan ubah status kalau produknya memang "Belum Terealisasi"
+                        if ($get('status') !== 'Belum Terealisasi') {
+                            if ((int) $state <= 0) {
+                                $set('status', 'Habis');
+                            } else {
+                                $set('status', 'Tersedia');
+                            }
                         }
                     }),
 
@@ -89,33 +92,19 @@ class ProductResource extends Resource
                     ->directory('products')
                     ->columnSpanFull(),
 
+                // PERBAIKAN 2: Pilihan Status di Form Input
                 Forms\Components\Select::make('status')
-                    ->label('Status Produk')
+                    ->label('Status Realisasi Produk')
                     ->options([
-                        'available' => 'Available',
-                        'sold_out' => 'Sold Out',
-                        'archived' => 'Archived',
+                        'Tersedia' => 'Tersedia (Sudah Direalisasikan)',
+                        'Belum Terealisasi' => 'Belum Terealisasi (Masih Rencana)',
+                        'Habis' => 'Stok Habis',
+                        'Arsip' => 'Diarsipkan',
                     ])
                     ->required()
-                    ->default('available'),
+                    ->default('Tersedia'),
 
-                Forms\Components\Section::make('Galeri Produk')
-                    ->description('Upload satu atau lebih foto untuk produk ini')
-                    ->schema([
-                        Repeater::make('images')
-                            ->relationship('images')
-                            ->schema([
-                                FileUpload::make('image_path')
-                                    ->label('Foto Galeri')
-                                    ->image()
-                                    ->directory('products/gallery')
-                                    ->required(),
-                            ])
-                            ->grid(3)
-                            ->label('Foto Galeri')
-                            ->collapsible(),
-                    ])
-                    ->columnSpanFull(),
+                // (Bagian Galeri dihapus sementara atau biarkan jika kamu masih butuh)
             ]);
     }
 
@@ -133,11 +122,6 @@ class ProductResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('slug')
-                    ->label('Slug')
-                    ->searchable()
-                    ->toggleable(),
-
                 Tables\Columns\TextColumn::make('price')
                     ->label('Price')
                     ->money('IDR', locale: 'id')
@@ -152,38 +136,32 @@ class ProductResource extends Resource
                     ->label('Image')
                     ->square(),
 
+                // PERBAIKAN 3: Warna label status di tabel
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'available' => 'success',
-                        'sold_out' => 'danger',
-                        'archived' => 'gray',
+                        'Tersedia' => 'success',
+                        'Belum Terealisasi' => 'warning',
+                        'Habis' => 'danger',
+                        'Arsip' => 'gray',
                         default => 'gray',
                     })
                     ->searchable(),
-
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('category')
                     ->label('Category')
                     ->relationship('category', 'name'),
 
+                // PERBAIKAN 4: Pilihan filter status di pojok kanan atas tabel
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Status')
                     ->options([
-                        'available' => 'Available',
-                        'sold_out' => 'Sold Out',
-                        'archived' => 'Archived',
+                        'Tersedia' => 'Tersedia',
+                        'Belum Terealisasi' => 'Belum Terealisasi',
+                        'Habis' => 'Habis',
+                        'Arsip' => 'Arsip',
                     ]),
             ])
             ->actions([

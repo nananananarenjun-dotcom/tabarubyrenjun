@@ -6,28 +6,31 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('products', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
-    $table->string('name');
-    $table->string('slug')->unique();
-    $table->text('description');
-    $table->decimal('price', 12, 2);
-    $table->integer('stock')->default(1);
-    $table->string('image')->nullable();
-    $table->enum('status', ['available', 'sold_out', 'archived'])->default('available');
-    $table->timestamps();
-});
+            // ID Custom String (PRD001)
+            $table->string('product_id', 10)->primary();
+            
+            // Foreign Key ke tabel categories (pastikan di tabel categories ID-nya juga string ya!)
+            $table->string('category_id', 10);
+            $table->foreign('category_id')->references('category_id')->on('categories')->onDelete('cascade');
+            
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->text('description');
+            $table->decimal('price', 12, 2);
+            $table->integer('stock')->default(1);
+            
+            // Ini tempat gambarnya tersimpan!
+            $table->string('image')->nullable();
+            
+            // Status untuk menjawab revisi "Produk Belum Terealisasi"
+            $table->enum('status', ['Tersedia', 'Habis', 'Arsip', 'Belum Terealisasi'])->default('Tersedia');
+            $table->timestamps();
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('products');

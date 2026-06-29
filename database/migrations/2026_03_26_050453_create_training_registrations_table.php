@@ -6,18 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up(): void
+   public function up(): void
     {
         Schema::create('training_registrations', function (Blueprint $table) {
-            $table->id();
+            $table->id(); // Biarkan ID pendaftaran pakai angka bawaan (kecuali kamu mau buat REG001)
 
-            $table->foreignId('user_id')
-                ->constrained('users')
-                ->onDelete('cascade');
+            // 1. Relasi manual ke tabel users (karena pakai string USR001)
+            $table->string('user_id', 10);
+            $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
 
-            $table->foreignId('training_package_id')
-                ->constrained('training_packages')
-                ->onDelete('cascade');
+            // 2. Relasi ke training_packages 
+            // (Asumsi: tabel training_packages masih pakai $table->id() bawaan Laravel)
+            $table->foreignId('training_package_id')->constrained('training_packages')->onDelete('cascade');
 
             $table->date('scheduled_date');
             $table->time('scheduled_time')->nullable();
@@ -44,7 +44,6 @@ return new class extends Migration
             $table->timestamps();
         });
     }
-
     public function down(): void
     {
         Schema::dropIfExists('training_registrations');

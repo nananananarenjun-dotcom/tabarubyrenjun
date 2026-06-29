@@ -9,16 +9,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('user_notifications', function (Blueprint $table) {
-            $table->id();
+            $table->id(); // ID notifikasi biarkan angka bawaan saja
 
-            $table->foreignId('user_id')
-                ->constrained('users')
-                ->cascadeOnDelete();
+            // 1. Relasi manual ke tabel users (karena USR001)
+            $table->string('user_id', 10);
+            $table->foreign('user_id')
+                  ->references('user_id')
+                  ->on('users')
+                  ->cascadeOnDelete();
 
-            $table->foreignId('order_id')
-                ->nullable()
-                ->constrained('orders')
-                ->nullOnDelete();
+            // 2. Relasi manual ke tabel orders (karena TRX001) dan boleh kosong (nullable)
+            $table->string('order_id', 10)->nullable();
+            $table->foreign('order_id')
+                  ->references('order_id')
+                  ->on('orders')
+                  ->nullOnDelete();
 
             $table->string('type')->default('order_status');
             $table->string('title');

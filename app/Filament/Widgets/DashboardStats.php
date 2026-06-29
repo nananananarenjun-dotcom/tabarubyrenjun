@@ -3,41 +3,90 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Order;
-use App\Models\TrainingRegistration;
-use App\Models\Expense;
+use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class DashboardStats extends BaseWidget
 {
+    protected static ?int $sort = 1;
+    // Mengatur lebar widget agar penuh di halaman
+    protected int | string | array $columnSpan = 'full';
+
+    // Mengatur agar dalam 1 baris menampilkan 3 kotak (nanti sisanya turun ke bawah)
+    protected function getColumns(): int
+    {
+        return 3;
+    }
+
     protected function getStats(): array
     {
-        // Hitung total pemasukan
-        $pemasukanProduk = Order::whereIn('status', ['paid', 'completed', 'shipped'])->sum('total_price');
-        $pemasukanPelatihan = TrainingRegistration::whereIn('status', ['paid', 'completed'])->sum('total_price');
-        $totalPemasukan = $pemasukanProduk + $pemasukanPelatihan;
+        // 1. TRANSAKSI HARIAN (Hari Ini)
+        $harian = Order::whereDate('created_at', Carbon::today())
+            ->whereIn('status', ['paid', 'completed', 'shipped'])
+            ->sum('total_price');
 
-        // Hitung total pengeluaran
-        $totalPengeluaran = Expense::sum('amount');
+        // 2. TRANSAKSI MINGGUAN (Senin - Minggu Ini)
+        $mingguan = Order::whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+            ->whereIn('status', ['paid', 'completed', 'shipped'])
+            ->sum('total_price');
 
-        // Hitung laba bersih (Keuntungan)
-        $labaBersih = $totalPemasukan - $totalPengeluaran;
+        // 3. TRANSAKSI BULANAN (Bulan Ini)
+        $bulanan = Order::whereMonth('created_at', Carbon::now()->month)
+            ->whereYear('created_at', Carbon::now()->year)
+            ->whereIn('status', ['paid', 'completed', 'shipped'])
+            ->sum('total_price');
+
+        // 4. TRANSAKSI TAHUNAN (Tahun Ini)
+        $tahunan = Order::whereYear('created_at', Carbon::now()->year)
+            ->whereIn('status', ['paid', 'completed', 'shipped'])
+            ->sum('total_price');
+
+        // 5. PROYEKSI & PELUANG
+        // Logika: Ambil total penjualan 3 bulan terakhir, cari rata-ratanya, 
+        // lalu proyeksikan peluang kenaikan 10% untuk bulan depan.
+        $total3Bulan = Order::where('created_at', '>=', Carbon::now()->subMonths(3))
+            ->whereIn('status', ['paid', 'completed', 'shipped'])
+            ->sum('total_price');
+        
+        $rataBulanan = $total3Bulan / 3;
+        $proyeksi = $rataBulanan + ($rataBulanan * 0.10); // Peluang naik 10%
+
+        // Hitung Produk Belum Terealisasi sebagai PELUANG BISNIS
+        $jumlahPeluangProduk = \App\Models\Product::where('status', 'Belum Terealisasi')->count();
+        $potensiHargaPeluang = \App\Models\Product::where('status', 'Belum Terealisasi')->sum('price');
 
         return [
-            Stat::make('Total Pemasukan', 'Rp ' . number_format($totalPemasukan, 0, ',', '.'))
-                ->description('Dari Penjualan & Pelatihan')
-                ->descriptionIcon('heroicon-m-arrow-trending-up')
+            Stat::make('Transaksi Harian', 'Rp ' . number_format($harian, 0, ',', '.'))
+                ->description('Penjualan hari ini')
+                ->descriptionIcon('heroicon-m-chart-bar')
                 ->color('success'),
 
-            Stat::make('Total Pengeluaran', 'Rp ' . number_format($totalPengeluaran, 0, ',', '.'))
-                ->description('Biaya operasional & bahan')
-                ->descriptionIcon('heroicon-m-arrow-trending-down')
-                ->color('danger'),
+            Stat::make('Transaksi Mingguan', 'Rp ' . number_format($mingguan, 0, ',', '.'))
+                ->description('Penjualan minggu ini')
+                ->descriptionIcon('heroicon-m-calendar-days')
+                ->color('success'),
 
-            Stat::make('Laba Bersih', 'Rp ' . number_format($labaBersih, 0, ',', '.'))
-                ->description($labaBersih >= 0 ? 'Keuntungan' : 'Kerugian')
-                ->descriptionIcon('heroicon-m-banknotes')
-                ->color($labaBersih >= 0 ? 'success' : 'danger'),
+            Stat::make('Transaksi Bulanan', 'Rp ' . number_format($bulanan, 0, ',', '.'))
+                ->description('Penjualan bulan ini')
+                ->descriptionIcon('heroicon-m-calendar')
+                ->color('success'),
+
+            Stat::make('Transaksi Tahunan', 'Rp ' . number_format($tahunan, 0, ',', '.'))
+                ->description('Penjualan tahun ini')
+                ->descriptionIcon('heroicon-m-globe-alt')
+                ->color('primary'),
+
+            Stat::make('Proyeksi Bulan Depan', 'Rp ' . number_format($proyeksi, 0, ',', '.'))
+                ->description('Estimasi +10% peluang pasar')
+                ->descriptionIcon('heroicon-m-arrow-trending-up')
+                ->color('warning'),
+
+            Stat::make('Peluang Produk Baru', $jumlahPeluangProduk . ' Item Menunggu')
+                ->description('Potensi nilai: Rp ' . number_format($potensiHargaPeluang, 0, ',', '.'))
+                ->descriptionIcon('heroicon-m-light-bulb')
+                ->color('info'),
         ];
+
     }
 }

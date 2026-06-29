@@ -6,17 +6,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class OrderItem extends Model
 {
-    protected $guarded = ['id'];
+    // Izinkan semua kolom diisi
+    protected $guarded = [];
 
-    // Item ini masuk ke pesanan mana?
+    // 1. Relasi balik ke Pesanan (Order)
     public function order()
     {
-        return $this->belongsTo(Order::class);
+        return $this->belongsTo(Order::class, 'order_id', 'order_id');
     }
 
-    // Item ini produknya apa?
+    // 2. Relasi ke Produk (Pastikan mencari product_id)
     public function product()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class, 'product_id', 'product_id');
     }
 }

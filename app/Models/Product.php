@@ -3,28 +3,37 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
-    protected $guarded = ['id'];
+    // Konfigurasi Primary Key Custom
+    protected $primaryKey = 'product_id';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
-    public function category(): BelongsTo
+    // Izinkan semua kolom (termasuk image) untuk diisi
+    protected $guarded = []; 
+
+    // Relasi ke Category (Opsional tapi penting untuk Filament)
+    public function category()
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Category::class, 'category_id', 'category_id');
     }
 
-    public function images(): HasMany
+    // Fungsi Otomatis Pembuat Kode PRD001
+    protected static function boot()
     {
-        return $this->hasMany(ProductImage::class);
-    }
+        parent::boot();
 
-    protected function price(): Attribute
-    {
-        return Attribute::make(
-            get: fn (mixed $value) => (int) $value,
-        );
+        static::creating(function ($model) {
+            $lastData = self::orderBy('product_id', 'desc')->first();
+
+            if (!$lastData) {
+                $model->product_id = 'PRD001';
+            } else {
+                $lastNumber = (int) substr($lastData->product_id, 3);
+                $model->product_id = 'PRD' . sprintf('%03d', $lastNumber + 1);
+            }
+        });
     }
 }
