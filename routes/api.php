@@ -20,6 +20,7 @@ use App\Http\Controllers\FinanceReportController;
 // Route Publik (Bisa diakses tanpa harus login/tanpa token)
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'authenticate']);
 
 Route::get('/products/{product_id}/reviews', [ReviewController::class, 'index']);
 
